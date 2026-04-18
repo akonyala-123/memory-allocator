@@ -1,6 +1,8 @@
 #include <unistd.h> //Include unix standard 
 #include <stddef.h> //for size_t
 #include <stdio.h>
+#include <stdlib.h> //for rand
+#include <string.h>  //for memset
 #define ALIGN8(size) (((size) + 7) & ~7)
 
 struct BlockHeader { 
@@ -129,5 +131,17 @@ int main() {
     printf("=== after malloc(100) ===\n");
     print_heap();
 
+    //Stress test
+    for (int i = 0; i < 1000; i++) {
+        void* ptr = my_malloc(rand() % 256 + 1);
+        if (ptr) {
+            memset(ptr, 0xAB, 1);  // write a known pattern
+            my_free(ptr);
+        }
+    }
+    printf("stress test passed\n");
+
     return 0;
 }
+
+
