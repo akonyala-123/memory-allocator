@@ -41,6 +41,15 @@ void* my_malloc(size_t size) {
     BlockHeader* current = free_list; 
     while (current != nullptr) {
         if (current->is_free && current->size >= size) {
+            //Split the block if possible and we have worthwhile space remaining 
+            if (current->size >= size + sizeof(BlockHeader) + 16) {
+                BlockHeader* new_block = (BlockHeader*) ((char*)(current + 1) + size); 
+                new_block->size = current->size - sizeof(BlockHeader) - size; 
+                new_block->is_free = true; 
+                new_block->next = current->next; 
+                current->next = new_block; 
+                current->size = size; 
+            }
             current->is_free = false; 
             return (void*)(current + 1);
         }
