@@ -69,6 +69,17 @@ void my_free(void* ptr) {
     }
     BlockHeader* block = (BlockHeader*)ptr - 1;
     block->is_free = true; 
+
+    //Coalesce all free adjacent memory blocks 
+    BlockHeader* current = free_list; 
+    while (current != nullptr && current->next != nullptr) {
+        if (current->is_free && current->next->is_free) {
+            current->size += (sizeof(BlockHeader) + current->next->size);
+            current->next = current->next->next;  
+        } else {
+            current = current->next; 
+        }
+    }
 }
 
 void print_heap() {
@@ -87,11 +98,8 @@ void print_heap() {
 }
 
 int main() {
-    printf("=== initial state ===\n");
-    print_heap();
-
     void* ptr1 = my_malloc(64);
-    void* ptr2 = my_malloc(32);
+    void* ptr2 = my_malloc(64);
     void* ptr3 = my_malloc(128);
 
     printf("=== after 3 allocations ===\n");
@@ -99,16 +107,13 @@ int main() {
 
     my_free(ptr1);
     my_free(ptr2);
-    my_free(ptr3);
 
-    printf("=== after freeing all ===\n");
+    printf("=== after freeing ptr1 and ptr2 (should coalesce) ===\n");
     print_heap();
 
-    // now allocate again - should reuse existing blocks
-    void* ptr4 = my_malloc(64);
-    void* ptr5 = my_malloc(32);
-
-    printf("=== after reallocating ===\n");
+    // this should reuse the coalesced block
+    void* ptr4 = my_malloc(100);
+    printf("=== after malloc(100) ===\n");
     print_heap();
 
     return 0;
