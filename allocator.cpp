@@ -1,5 +1,6 @@
 #include <unistd.h> //Include unix standard 
 #include <stddef.h> //for size_t
+#include <stdio.h>
 
 struct BlockHeader { 
     size_t size; 
@@ -40,6 +41,7 @@ void* my_malloc(size_t size) {
     BlockHeader* current = free_list; 
     while (current != nullptr) {
         if (current->is_free && current->size >= size) {
+            current->is_free = false; 
             return (void*)(current + 1);
         }
         current = current->next; 
@@ -69,15 +71,45 @@ void my_free(void* ptr) {
     block->is_free = true; 
 }
 
+void print_heap() {
+    BlockHeader* current = free_list; 
+    int i = 0; 
+    while (current != nullptr) {
+        printf("Block %d: size=%zu, is_free=%d, address=%p\n",
+            i,
+            current->size,
+            current->is_free,
+            (void*)(current + 1));
+        current = current->next;
+        i++;
+    }
+    printf("---end of heap---\n");
+}
+
 int main() {
-    // test our allocator
+    printf("=== initial state ===\n");
+    print_heap();
+
     void* ptr1 = my_malloc(64);
     void* ptr2 = my_malloc(32);
     void* ptr3 = my_malloc(128);
 
+    printf("=== after 3 allocations ===\n");
+    print_heap();
+
     my_free(ptr1);
     my_free(ptr2);
     my_free(ptr3);
+
+    printf("=== after freeing all ===\n");
+    print_heap();
+
+    // now allocate again - should reuse existing blocks
+    void* ptr4 = my_malloc(64);
+    void* ptr5 = my_malloc(32);
+
+    printf("=== after reallocating ===\n");
+    print_heap();
 
     return 0;
 }
