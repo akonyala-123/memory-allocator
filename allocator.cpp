@@ -1,6 +1,7 @@
 #include <unistd.h> //Include unix standard 
 #include <stddef.h> //for size_t
 #include <stdio.h>
+#define ALIGN8(size) (((size) + 7) & ~7)
 
 struct BlockHeader { 
     size_t size; 
@@ -23,7 +24,10 @@ void* my_malloc(size_t size) {
     if (size == 0) {
         return nullptr; 
     }
-    
+
+    //Make sure size is word aligned
+    size = ALIGN8(size);
+
     //If free list is empty go straight to OS
     if (free_list == nullptr) {
         BlockHeader* block = (BlockHeader*) request_space(size);
