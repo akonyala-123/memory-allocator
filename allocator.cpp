@@ -5,7 +5,7 @@ struct BlockHeader {
     size_t size; 
     bool is_free; 
     BlockHeader* next; 
-}
+};
 //Global pointer to start of the block list 
 BlockHeader* free_list = nullptr; 
 
@@ -25,7 +25,7 @@ void* my_malloc(size_t size) {
     
     //If free list is empty go straight to OS
     if (free_list == nullptr) {
-        BlockHeader* block = request_space(size);
+        BlockHeader* block = (BlockHeader*) request_space(size);
         if (block == nullptr) {
             return nullptr; 
         }
@@ -46,7 +46,7 @@ void* my_malloc(size_t size) {
     }
 
     //If no block is free then request from OS and add to free_list
-    BlockHeader* block = request_space(size);
+    BlockHeader* block = (BlockHeader*) request_space(size);
     if (block == nullptr) {
         return nullptr; 
     }
@@ -54,9 +54,30 @@ void* my_malloc(size_t size) {
     block->is_free = false; 
     block->next = nullptr; 
     BlockHeader* tail = free_list; 
-    while (tail != nullptr) {
+    while (tail->next != nullptr) {
         tail = tail->next; 
     }
     tail->next = block; 
     return (void*)(block + 1);
+}
+
+void my_free(void* ptr) {
+    if (ptr == nullptr) {
+        return; 
+    }
+    BlockHeader* block = (BlockHeader*)ptr - 1;
+    block->is_free = true; 
+}
+
+int main() {
+    // test our allocator
+    void* ptr1 = my_malloc(64);
+    void* ptr2 = my_malloc(32);
+    void* ptr3 = my_malloc(128);
+
+    my_free(ptr1);
+    my_free(ptr2);
+    my_free(ptr3);
+
+    return 0;
 }
